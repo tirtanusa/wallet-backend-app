@@ -61,14 +61,10 @@ class WalletController extends Controller
             ], 201);
 
         } catch (\InvalidArgumentException $e) {
+            // Tetap di sini — error bisnis yang Handler tidak tahu
             return response()->json([
                 'message' => $e->getMessage(),
             ], 422);
-
-        } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'Terjadi kesalahan, silakan coba lagi.',
-            ], 500);
         }
     }
 }

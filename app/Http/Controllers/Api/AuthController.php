@@ -10,21 +10,23 @@ use App\Models\Wallet;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\DB;
 
 class AuthController extends Controller
 {
     public function register(RegisterRequest $request): JsonResponse
     {
-        $user = User::create([
-            'name'     => $request->name,
-            'email'    => $request->email,
-            'password' => Hash::make($request->password),
-        ]);
+        $user = DB::transaction(function () use ($request) {
+            $user = User::create([
+                'name'     => $request->name,
+                'email'    => $request->email,
+                'password' => Hash::make($request->password),
+            ]);
 
-        // Buat wallet otomatis saat register
-        Wallet::create([
-            'user_id' => $user->id,
-        ]);
+            $user->wallet()->create();
+
+            return $user;
+        });
 
         $token = $user->createToken('auth_token')->plainTextToken;
 

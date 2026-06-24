@@ -33,7 +33,7 @@ class TransactionController extends Controller
 
         return response()->json([
             'message' => 'Berhasil mengambil detail transaksi.',
-            'data'    => new TransactionResources($transaction),
+            'data'    => new TransactionResource($transaction),
         ]);
     }
 }
