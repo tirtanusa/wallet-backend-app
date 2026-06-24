@@ -5,7 +5,7 @@ namespace App\Http\Resources;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-class TransactionResource extends JsonResource
+class TransactionResources extends JsonResource  // sesuaikan dengan nama file
 {
     public function toArray(Request $request): array
     {

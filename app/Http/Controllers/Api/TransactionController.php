@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Services\WalletService;
 use Illuminate\Http\JsonResponse;
 use App\Http\Resources\TransactionResources;
+use Illuminate\Support\Facades\Gate;
 
 class TransactionController extends Controller
 {
@@ -29,11 +30,11 @@ class TransactionController extends Controller
             referenceCode: $referenceCode,
         );
 
-        $this->authorize('view', $transaction);
+        Gate::authorize('view', $transaction);
 
         return response()->json([
             'message' => 'Berhasil mengambil detail transaksi.',
-            'data'    => new TransactionResource($transaction),
+            'data'    => new TransactionResources($transaction),
         ]);
     }
 }

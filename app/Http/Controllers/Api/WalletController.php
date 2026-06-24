@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Wallet\TopUpRequest;
 use App\Http\Requests\Wallet\TransferRequest;
+use App\Http\Resources\WalletResources;
+use App\Http\Resources\TransactionResources;
 use App\Services\WalletService;
 use Illuminate\Http\JsonResponse;
 
@@ -20,7 +22,7 @@ class WalletController extends Controller
 
         return response()->json([
             'message' => 'Berhasil mengambil saldo.',
-            'data'    => new WalletResource(auth()->user()->wallet),
+            'data'    => new WalletResources(auth()->user()->wallet),
         ]);
     }
 
@@ -35,7 +37,7 @@ class WalletController extends Controller
 
             return response()->json([
                 'message' => 'Top up berhasil.',
-                'data'    => new TransactionResource($transaction),
+                'data'    => new TransactionResources($transaction),
             ], 201);
 
         } catch (\Exception $e) {
@@ -57,7 +59,7 @@ class WalletController extends Controller
 
             return response()->json([
                 'message' => 'Transfer berhasil.',
-                'data'    => new TransactionResource($transaction),
+                'data'    => new TransactionResources($transaction),
             ], 201);
 
         } catch (\InvalidArgumentException $e) {

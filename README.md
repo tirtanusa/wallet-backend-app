@@ -1,58 +1,330 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# 💰 Wallet App — REST API
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+A **RESTful API** for a digital wallet application built with **Laravel 13** and secured with **Laravel Sanctum**. This backend supports user authentication, wallet balance management, and fund transfers between users.
 
-## About Laravel
+---
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## 🚀 Tech Stack
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+| Layer | Technology |
+|---|---|
+| Framework | Laravel 13 |
+| Language | PHP 8.3 |
+| Authentication | Laravel Sanctum (Token-based) |
+| Database | MySQL |
+| Testing | PestPHP |
+| Code Style | Laravel Pint |
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+---
 
-## Learning Laravel
+## ✨ Features
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+- **Authentication** — Register, Login, and Logout with Sanctum token
+- **Wallet Balance** — View current wallet balance
+- **Top Up** — Add funds to own wallet
+- **Transfer** — Transfer funds to another user by email
+- **Transaction History** — Paginated list of all transactions
+- **Transaction Detail** — View a specific transaction by reference code
+- **Authorization** — Users can only view their own transactions (via Policy)
+- **Race Condition Safe** — Uses database-level locking (`lockForUpdate`) and atomic `increment`/`decrement` to prevent concurrent balance issues
+- **Soft Deletes** — Wallet and Transaction records use soft deletes for data integrity
 
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+---
 
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
+## 📁 Project Structure
 
-## Agentic Development
-
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
-
-```bash
-composer require laravel/boost --dev
-
-php artisan boost:install
+```
+app/
+├── Http/
+│   ├── Controllers/Api/
+│   │   ├── AuthController.php
+│   │   ├── WalletController.php
+│   │   └── TransactionController.php
+│   ├── Requests/
+│   │   ├── Auth/
+│   │   │   ├── RegisterRequest.php
+│   │   │   └── LoginRequest.php
+│   │   └── Wallet/
+│   │       ├── TopUpRequest.php
+│   │       └── TransferRequest.php
+│   └── Resources/
+│       ├── WalletResources.php
+│       └── TransactionResources.php
+├── Models/
+│   ├── User.php
+│   ├── Wallet.php
+│   └── Transaction.php
+├── Policies/
+│   └── TransactionPolicy.php
+└── Services/
+    └── WalletService.php
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+---
 
-## Contributing
+## 🗄️ Database Schema
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+### `users`
+| Column | Type | Description |
+|---|---|---|
+| id | bigint | Primary key |
+| name | string | User's full name |
+| email | string | Unique email address |
+| password | string | Hashed password |
+| timestamps | — | created_at, updated_at |
 
-## Code of Conduct
+### `wallets`
+| Column | Type | Description |
+|---|---|---|
+| id | bigint | Primary key |
+| user_id | bigint (FK) | Belongs to a user |
+| balance | decimal(15,2) | Current balance, default `0` |
+| currency | string(3) | Currency code, default `IDR` |
+| timestamps | — | created_at, updated_at, deleted_at |
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+### `transactions`
+| Column | Type | Description |
+|---|---|---|
+| id | bigint | Primary key |
+| wallet_id | bigint (FK) | Owner wallet |
+| related_wallet_id | bigint (FK, nullable) | Counterpart wallet for transfers |
+| type | enum | `topup`, `transfer_out`, `transfer_in` |
+| amount | decimal(15,2) | Transaction amount |
+| balance_before | decimal(15,2) | Balance before transaction |
+| balance_after | decimal(15,2) | Balance after transaction |
+| reference_code | string(50) | Unique transaction reference |
+| description | text (nullable) | Optional note |
+| timestamps | — | created_at, updated_at, deleted_at |
 
-## Security Vulnerabilities
+---
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+## 📡 API Endpoints
 
-## License
+### Authentication
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+| Method | Endpoint | Description | Auth |
+|---|---|---|---|
+| POST | `/api/auth/register` | Register a new user | ❌ |
+| POST | `/api/auth/login` | Login and get token | ❌ |
+| POST | `/api/auth/logout` | Logout (revoke token) | ✅ |
+
+### Wallet
+
+| Method | Endpoint | Description | Auth |
+|---|---|---|---|
+| GET | `/api/wallet` | Get current wallet balance | ✅ |
+| POST | `/api/wallet/topup` | Top up wallet balance | ✅ |
+| POST | `/api/wallet/transfer` | Transfer funds to another user | ✅ |
+
+### Transactions
+
+| Method | Endpoint | Description | Auth |
+|---|---|---|---|
+| GET | `/api/transactions` | Get paginated transaction history | ✅ |
+| GET | `/api/transactions/{reference_code}` | Get transaction detail by reference code | ✅ |
+
+> **Auth**: ✅ requires `Authorization: Bearer {token}` header
+
+---
+
+## 📋 Request & Response Examples
+
+### POST `/api/auth/register`
+```json
+// Request
+{
+  "name": "John Doe",
+  "email": "john@example.com",
+  "password": "password",
+  "password_confirmation": "password"
+}
+
+// Response 201
+{
+  "message": "Registrasi berhasil.",
+  "token": "1|abc123..."
+}
+```
+
+### POST `/api/auth/login`
+```json
+// Request
+{
+  "email": "john@example.com",
+  "password": "password"
+}
+
+// Response 200
+{
+  "message": "Login berhasil.",
+  "token": "2|xyz789..."
+}
+```
+
+### GET `/api/wallet`
+```json
+// Response 200
+{
+  "message": "Berhasil mengambil saldo.",
+  "data": {
+    "balance": "150000.00",
+    "currency": "IDR"
+  }
+}
+```
+
+### POST `/api/wallet/topup`
+```json
+// Request
+{
+  "amount": 100000,
+  "description": "Top up via bank transfer"
+}
+
+// Response 201
+{
+  "message": "Top up berhasil.",
+  "data": {
+    "reference_code": "TOP-20260624-ABCD12",
+    "type": "topup",
+    "amount": "100000.00",
+    "balance_before": "50000.00",
+    "balance_after": "150000.00",
+    "description": "Top up via bank transfer",
+    "created_at": "2026-06-24T09:00:00.000000Z"
+  }
+}
+```
+
+### POST `/api/wallet/transfer`
+```json
+// Request
+{
+  "recipient_email": "jane@example.com",
+  "amount": 50000,
+  "description": "Bayar makan siang"
+}
+
+// Response 201
+{
+  "message": "Transfer berhasil.",
+  "data": {
+    "reference_code": "TRF-20260624-XYZ789",
+    "type": "transfer_out",
+    "amount": "50000.00",
+    "balance_before": "150000.00",
+    "balance_after": "100000.00",
+    "description": "Bayar makan siang",
+    "created_at": "2026-06-24T09:05:00.000000Z"
+  }
+}
+```
+
+### GET `/api/transactions`
+```json
+// Response 200
+{
+  "message": "Berhasil mengambil riwayat transaksi.",
+  "data": {
+    "current_page": 1,
+    "data": [ ... ],
+    "per_page": 10,
+    "total": 5
+  }
+}
+```
+
+---
+
+## ⚙️ Installation & Setup
+
+### Prerequisites
+- PHP >= 8.3
+- Composer
+- MySQL
+- Node.js & NPM
+
+### 1. Clone the repository
+```bash
+git clone <repository-url>
+cd wallet-app
+```
+
+### 2. Install dependencies
+```bash
+composer install
+npm install
+```
+
+### 3. Configure environment
+```bash
+cp .env.example .env
+php artisan key:generate
+```
+
+Edit `.env` and configure your database:
+```env
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=wallet_app
+DB_USERNAME=root
+DB_PASSWORD=your_password
+```
+
+### 4. Run migrations
+```bash
+php artisan migrate
+```
+
+### 5. Start the development server
+```bash
+php artisan serve
+```
+
+The API will be available at `http://localhost:8000`.
+
+> **Quick setup**: You can also run `composer setup` to install all dependencies, generate the app key, and run migrations in one step.
+
+---
+
+## 🧪 Running Tests
+
+```bash
+php artisan test
+# or
+composer test
+```
+
+---
+
+## 🔒 Security
+
+- All protected routes require a **Sanctum Bearer Token**
+- Passwords are **hashed** using Laravel's default bcrypt
+- Database transactions use **`lockForUpdate`** to prevent race conditions on concurrent balance operations
+- **`TransactionPolicy`** ensures users can only access their own transaction records
+- Wallet balances use atomic **`increment`/`decrement`** operations for consistency
+
+---
+
+## 📝 Reference Code Format
+
+Transaction reference codes follow this format:
+
+```
+{PREFIX}-{YYYYMMDD}-{RANDOM6}
+```
+
+| Prefix | Type |
+|---|---|
+| `TOP` | Top Up |
+| `TRF` | Transfer |
+
+**Example**: `TOP-20260624-AB12CD`, `TRF-20260624-XY78ZQ`
+
+---
+
+## 📄 License
+
+This project is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).

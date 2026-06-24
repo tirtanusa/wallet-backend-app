@@ -29,7 +29,7 @@ class WalletService
             $balanceBefore = $wallet->balance;
             $balanceAfter  = $balanceBefore + $amount;
 
-            $wallet->update(['balance' => $balanceAfter]);
+            $wallet->increment('balance', $amount);
 
             return Transaction::create([
                 'wallet_id'      => $wallet->id,
@@ -67,10 +67,9 @@ class WalletService
             $referenceCode   = $this->generateReferenceCode('TRF');
 
             // Kurangi saldo pengirim
-            $senderWallet->update(['balance' => $senderBefore - $amount]);
-
+            $senderWallet->decrement('balance', $amount);
             // Tambah saldo penerima
-            $recipientWallet->update(['balance' => $recipientBefore + $amount]);
+            $recipientWallet->increment('balance', $amount);
 
             // Catat transaksi sisi pengirim
             $transaction = Transaction::create([
