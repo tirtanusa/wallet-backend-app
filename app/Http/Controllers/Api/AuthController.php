@@ -32,7 +32,10 @@ class AuthController extends Controller
 
         return response()->json([
             'message' => 'Registrasi berhasil.',
-            'token'   => $token,
+            'data'    => [
+                'user' => $user->name,
+                'token' => $token,
+            ]
         ], 201);
     }
 
@@ -49,7 +52,10 @@ class AuthController extends Controller
 
         return response()->json([
             'message' => 'Login berhasil.',
-            'token'   => $token,
+            'data'    => [
+                'user' => $user->name,
+                'token' => $token,
+            ]
         ]);
     }
 
